@@ -1,6 +1,5 @@
 import re
 import copy
-import sys
 import os.path as path
 
 
@@ -9,13 +8,13 @@ def substring_after(s, splitter):               # substring(string to split, spl
     return s.partition(splitter)[2]             # return text after '= '
 
 
-def read_write_file(filename):
-
-    all_lengths = ""                            # stores all lengths of paths in one line
-    city_file = open(filename, "r")             # open files
-    filename = substring_after(filename, "NEW") # create tour file
-    tour_file = open(path.abspath(path.join(__file__ ,"../../TourfileA/tourNEW" + filename)),'w')
-    for line in city_file:
+def find_tour(filename):
+    all_lengths = ""                                # stores all lengths of paths in one line
+    city_file = open(filename, "r")
+    filename = substring_after(filename, "NEW")
+    tour_file = open(path.abspath(path.join(__file__, "../../tourfiles/A Star/tourNEW" + filename)), 'w')
+    size = 0
+    for line in city_file:      # format file
         if "NAME" in line:
             name = substring_after(line, '= ')
             print("NAME = " + name)
@@ -29,11 +28,14 @@ def read_write_file(filename):
             all_lengths += line
     row_count = 0
     col_count = 1
-    max_size = int(size)                            # size of distance matrix
-    all_lengths = all_lengths.replace("\n", "")     # convert all_lengths into an array of lengths
+    if size == 0:
+        print("Error: No size specified in city file")
+        exit()
+    max_size = int(size)
+    all_lengths = all_lengths.replace("\n", "")
     all_lengths = re.sub("[^0123456789,]", "", all_lengths)
     all_lengths = all_lengths.split(",")
-    dist_matrix = [['-'] * int(size) for i in range(int(size))]
+    dist_matrix = [['-'] * int(size) for _ in range(int(size))]
     for x in range(0, len(all_lengths)):            # build dist_matrix
         if col_count - row_count > max_size - 1:
             row_count += 1
@@ -110,9 +112,10 @@ def prim_recall(prim_matrix, size, i):
         prim_recall(prim_matrix, size, pos)         # repeat until a column has all its values crossed out.
 
 
-def a_star(dist_matrix, size,i):
+def a_star(dist_matrix, size, i):
     connected_nodes_list = list()
-    connected_nodes_list.append(DijkstraBox([i], 0))     # Set up dijkstra's box, where '[i]' is the initial path and '0' is the working value
+    # Set up dijkstra's box, where '[i]' is the initial path and '0' is the working value
+    connected_nodes_list.append(DijkstraBox([i], 0))
     final_path = a_star_recall(dist_matrix, size, connected_nodes_list)     # run recursive A* algorithm
     return final_path                                    # return path
 
@@ -129,14 +132,17 @@ def a_star_recall(dist_matrix, size, path_list):
             lowest = path_list[i].get_working_val()
     nodes_connected = path_list[pos].get_nodes_connected()    # and get its path
     del path_list[pos]                        # remove the path from the list of dijkstra boxes.
-    prim_length = int(prim(nodes_connected, dist_matrix, size)) # calculate the minimum spanning tree of the nodes not connected in the path
+    # calculate the minimum spanning tree of the nodes not connected in the path
+    prim_length = int(prim(nodes_connected, dist_matrix, size))
     for n in range(0, int(size)):                       # for each node in the graph,
         a_star_length = 0
         if n not in nodes_connected:                    # if the node is not already in the path
             for cn in range(0, len(nodes_connected) - 1):   # calculate the length of the current path
                 a_star_length += int(dist_matrix[nodes_connected[cn]][nodes_connected[cn+1]])
-            a_star_length += int(dist_matrix[nodes_connected[len(nodes_connected) - 1]][n]) # and add the new, final connection to the total
-            tot_length = prim_length + a_star_length    # add the new length of the path to the minimum spanning tree length
+            # and add the new, final connection to the total
+            a_star_length += int(dist_matrix[nodes_connected[len(nodes_connected) - 1]][n])
+            # add the new length of the path to the minimum spanning tree length
+            tot_length = prim_length + a_star_length
             # also add the shortest two connections between the minimum spanning tree and the path.
             tot_length += shortest_connections(nodes_connected[0], str(n), nodes_connected, dist_matrix, size)
             # store the new entry into the dijkstra box list
@@ -151,7 +157,8 @@ def a_star_recall(dist_matrix, size, path_list):
     a = int((tot_working_val / len(path_list)) - lowest)  # a is the difference between the mean and minimum length
     b = int(b*2)                                        # b is twice the total number of paths in the list
     filter_val = int(lowest + (a / b))                  # filter value is set as lowest + (a/b)
-    for i in range(len(path_list)-1, -1, -1): # for each path in the list, if the length is greater than the filter value, remove the Dijkstra box from the list
+    # for each path in the list, if the length is greater than the filter value, remove the Dijkstra box from the list
+    for i in range(len(path_list)-1, -1, -1):
         if path_list[i].get_working_val() > filter_val:
             del path_list[i]
             i -= 1
@@ -170,7 +177,7 @@ def a_star_recall(dist_matrix, size, path_list):
                     lowest = path_list[i].get_working_val()
         new_node_list = path_list[pos].get_nodes_connected()
         count = 0
-        for x in range(0, int(size)):                   # find two nodes not in psth
+        for x in range(0, int(size)):                   # find two nodes not in path
             if x not in new_node_list:
                 if count == 0:
                     node_one = int(x)
@@ -195,7 +202,8 @@ def shortest_connections(start_node, last_node, new_node_list, dist_matrix, size
     pos = None
     for x in range(0, int(size)):                       # for each node in graph, if not connected to the path,
         if str(x) not in new_node_list and str(x) != str(last_node):
-            if dist_matrix[int(start_node)][x].isdigit():   # calculate the connection length between node 'x' and the start node
+            # calculate the connection length between node 'x' and the start node
+            if dist_matrix[int(start_node)][x].isdigit():
                 if shortest_start_length is None:           # select the node with the shortest connection
                     shortest_start_length = dist_matrix[int(start_node)][x]
                     pos = x
@@ -204,8 +212,10 @@ def shortest_connections(start_node, last_node, new_node_list, dist_matrix, size
                     pos = x
     shortest_last_length = None
     for x in range(0, int(size)):
-        if dist_matrix[int(last_node)][x].isdigit():        # calculate the connection length between node 'x' and the last node in the path
-            if str(x) not in new_node_list and str(x) != str(pos):      # exclude the previous node found for the start connection
+        # calculate the connection length between node 'x' and the last node in the path
+        if dist_matrix[int(last_node)][x].isdigit():
+            # exclude the previous node found for the start connection
+            if str(x) not in new_node_list and str(x) != str(pos):
                 if shortest_last_length is None:
                     shortest_last_length = dist_matrix[int(last_node)][x]
                 elif int(shortest_last_length) > int(dist_matrix[int(last_node)][x]):
@@ -230,11 +240,8 @@ class DijkstraBox:
     def set_working_val(self, working_val):                 # update working value
         self.working_val = working_val
 
-def main():
-    sys.setrecursionlimit(100000000)
-    read_write_file(path.abspath(path.join(__file__ ,"../../cityfiles/NEWAISearchfile012.txt")))
-
 
 if __name__ == '__main__':
-    main()
-
+    input_file = "NEWAISearchfile012.txt"
+    city_filename = path.abspath(path.join(__file__, "../../cityfiles/" + input_file))
+    find_tour(city_filename)
