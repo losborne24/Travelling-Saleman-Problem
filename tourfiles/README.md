@@ -1,1 +1,1 @@
-Example tours found
+Example tours found by AI search
