@@ -1,1 +1,1 @@
-Example tours found by AI search
+Example tours output from the search algorithms.
