@@ -1,7 +1,11 @@
 import re
 import copy
 import os.path as path
+import argparse
 
+parser = argparse.ArgumentParser(description="City file of interest")
+parser.add_argument("city_file", type=str)
+args = parser.parse_args()
 
 def substring_after(s, splitter):               # substring(string to split, split text at splitter)
     s = s.rstrip('\n')
@@ -51,7 +55,6 @@ def find_tour(filename):
     else:
         max_it = int(size)
     for x in range(0, max_it):                      # for each start location, run A* search
-        print(x)
         tsp_path = a_star(dist_matrix, size, x)
         total_length = 0
         for i in range(0, int(size) - 1):           # calculate total length of the new path
@@ -242,6 +245,5 @@ class DijkstraBox:
 
 
 if __name__ == '__main__':
-    input_file = "NEWAISearchfile012.txt"
-    city_filename = path.abspath(path.join(__file__, "../../cityfiles/" + input_file))
+    city_filename = path.abspath(path.join(__file__, "../../cityfiles/" + args.city_file))
     find_tour(city_filename)

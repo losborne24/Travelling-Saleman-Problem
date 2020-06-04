@@ -2,7 +2,11 @@ import random
 import re
 import math
 import os.path as path
+import argparse
 
+parser = argparse.ArgumentParser(description="City file of interest")
+parser.add_argument("city_file", type=str)
+args = parser.parse_args()
 
 def substring_after(s, splitter):       # substring(string to split, split text at splitter)
     s = s.rstrip('\n')
